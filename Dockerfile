@@ -1,46 +1,37 @@
-# Stage 1: Build stage
+# Stage 1: Build
 FROM node:20-slim AS builder
-
 WORKDIR /app
 
-# Copy root configurations
-COPY package.json ./
+# Root config copy karo
+COPY package.json package-lock.json ./
 
-# Copy specific folders needed for backend
+# Backend aur shared logic copy karo (Frontend ignore)
 COPY backend/package.json ./backend/
-COPY shared/db ./shared/db
-COPY shared/api-zod ./shared/api-zod
+COPY shared ./shared
 
-# Install dependencies (including shared workspace deps)
+# Dependencies install (Shared workspace ke liye root level zaroori hai)
 RUN npm install --legacy-peer-deps
 
-# Copy backend source code
+# Poora backend source copy aur build
 COPY backend ./backend
-
-# Build the backend
 WORKDIR /app/backend
 RUN npm run build
 
-# Stage 2: Runner stage
+# Stage 2: Runner
 FROM node:20-slim AS runner
-
 WORKDIR /app
 
-# Environment defaults
 ENV NODE_ENV=production
 ENV PORT=5000
 
-# Builder stage se sirf zaroori files uthao
+# Builder stage se sirf compiled files uthao
 COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/package.json ./package.json
-COPY --from=builder /app/backend/build.mjs ./build.mjs
 
-# Production dependencies install karo
+# Production deps install karo
 RUN npm install --omit=dev --legacy-peer-deps
 
-# Port expose karo
 EXPOSE 5000
 
-# Backend start karo
+# Direct node se start karo, bina workspace flag ke
 CMD ["node", "--enable-source-maps", "./dist/index.mjs"]
-
