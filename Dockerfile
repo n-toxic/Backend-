@@ -3,7 +3,7 @@ FROM node:20-slim AS builder
 WORKDIR /app
 
 # Root config copy karo
-COPY package.json package-lock.json ./
+COPY package.json ./
 
 # Backend aur shared logic copy karo (Frontend ignore)
 COPY backend/package.json ./backend/
